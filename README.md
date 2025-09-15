@@ -8,10 +8,7 @@ Este proyecto es el frontend para la gestión de líneas de buses, desarrollado 
 - Token de Mapbox ([obtenlo aquí](https://account.mapbox.com/access-tokens/))
 
 ## Instalación
-<<<<<<< HEAD
 
-=======
->>>>>>> e4216bb (Actualiza README con nuevas funcionalidades y visualización de rutas)
 1. Instala las dependencias:
    ```pwsh
    npm install
@@ -46,10 +43,7 @@ Este proyecto es el frontend para la gestión de líneas de buses, desarrollado 
 - `src/components/StepGeojson.jsx`: Carga, edición y previsualización de rutas
 - `src/App.jsx`: Flujo principal de la aplicación
 
-<<<<<<< HEAD
 
-=======
->>>>>>> e4216bb (Actualiza README con nuevas funcionalidades y visualización de rutas)
 ## Notas de integración
 - El frontend está listo para conectarse al backend. Solo asegúrate de que los endpoints estén activos y la base de datos configurada.
 - Si necesitas cambiar la URL del backend, actualiza las llamadas fetch en los componentes.
