@@ -87,6 +87,8 @@ export default function StepGeojson({ lineDirectionId, color }) {
   const [geojsonError, setGeojsonError] = useState('');
   const [fileName, setFileName] = useState('');
   const [saving, setSaving] = useState(false);
+  const [backendMetrics, setBackendMetrics] = useState(null);
+  const [backendGeometry, setBackendGeometry] = useState(null);
   const mapContainer = useRef(null);
   const map = useRef(null);
   const fileInputRef = useRef();
@@ -107,6 +109,42 @@ export default function StepGeojson({ lineDirectionId, color }) {
       if (map.current.getLayer('preview-line')) map.current.removeLayer('preview-line');
       map.current.removeSource('preview');
     }
+    if (map.current.getSource('backend')) {
+      if (map.current.getLayer('backend-line')) map.current.removeLayer('backend-line');
+      map.current.removeSource('backend');
+    }
+    // Mostrar geometría guardada en backend
+    if (backendGeometry && backendGeometry.coordinates) {
+      const geojson = {
+        type: 'FeatureCollection',
+        features: [
+          {
+            type: 'Feature',
+            geometry: backendGeometry
+          }
+        ]
+      };
+      map.current.addSource('backend', {
+        type: 'geojson',
+        data: geojson
+      });
+      map.current.addLayer({
+        id: 'backend-line',
+        type: 'line',
+        source: 'backend',
+        paint: {
+          'line-color': '#00BCD4',
+          'line-width': 3,
+          'line-opacity': 0.7
+        }
+      });
+      // Centrar vista en la geometría guardada
+      const coords = backendGeometry.coordinates[0] || backendGeometry.coordinates;
+      if (coords && coords.length > 0) {
+        map.current.flyTo({ center: coords[0], zoom: 13 });
+      }
+    }
+    // Mostrar previsualización local si existe
     if (segments.length > 0) {
       const geojson = {
         type: 'FeatureCollection',
@@ -135,7 +173,22 @@ export default function StepGeojson({ lineDirectionId, color }) {
       }
     }
     // eslint-disable-next-line
-  }, [segments, color]);
+  }, [segments, color, backendGeometry]);
+
+  useEffect(() => {
+    if (!lineDirectionId) return;
+    fetch(`http://localhost:3000/directions/${lineDirectionId}/route`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.ok) {
+          setBackendMetrics({ segments: data.segments, length: data.length_m_total });
+          setBackendGeometry(data.geometry);
+        } else {
+          setBackendMetrics(null);
+          setBackendGeometry(null);
+        }
+      });
+  }, [lineDirectionId]);
 
   const handleFile = e => {
     const file = e.target.files[0];
@@ -228,6 +281,14 @@ export default function StepGeojson({ lineDirectionId, color }) {
       {fileName && <div>Archivo: {fileName}</div>}
       {geojsonError && <div className="error">{geojsonError}</div>}
       <div ref={mapContainer} style={{ width: '100%', height: '300px', margin: '1em 0', borderRadius: '8px' }} />
+      {backendMetrics && (
+        <div style={{margin:'1em 0', color:'#fff', background:'#333', padding:'0.5em', borderRadius:'8px'}}>
+          <b>Métricas guardadas en backend:</b><br/>
+          Segmentos: {backendMetrics.segments}<br/>
+          Longitud total: {backendMetrics.length} metros<br/>
+          {backendGeometry === null ? <span style={{color:'orange'}}>No hay ruta guardada para esta dirección.</span> : null}
+        </div>
+      )}
       <ul>
         {segments.map(seg => (
           <li key={seg.seq}>
